@@ -90,8 +90,9 @@ withCompletionBlock:(GFCompletionBlock)block
     if (location != nil) {
         NSNumber *lat = [NSNumber numberWithDouble:location.coordinate.latitude];
         NSNumber *lng = [NSNumber numberWithDouble:location.coordinate.longitude];
+        NSNumber *alt = [NSNumber numberWithDouble:location.altitude];
         NSString *geoHash = [GFGeoHash newWithLocation:location.coordinate].geoHashValue;
-        value = @{ @"l": @[ lat, lng ], @"g": geoHash };
+      value = @{ @"l": @[ lat, lng ], @"a": alt, @"g": geoHash };
         priority = geoHash;
     } else {
         value = nil;
@@ -122,15 +123,19 @@ withCompletionBlock:(GFCompletionBlock)block
 {
     if ([value isKindOfClass:[NSDictionary class]] && [value objectForKey:@"l"] != nil) {
         id locObj = [value objectForKey:@"l"];
+        id altObj = [value objectForKey:@"a"];
         if ([locObj isKindOfClass:[NSArray class]] && [locObj count] == 2) {
             id latNum = [locObj objectAtIndex:0];
             id lngNum = [locObj objectAtIndex:1];
             if ([latNum isKindOfClass:[NSNumber class]] &&
-                [lngNum isKindOfClass:[NSNumber class]]) {
+                [lngNum isKindOfClass:[NSNumber class]] &&
+                [altObj isKindOfClass:[NSNumber class]]) {
                 CLLocationDegrees lat = [latNum doubleValue];
                 CLLocationDegrees lng = [lngNum doubleValue];
+                CLLocationDistance alt = [altObj doubleValue];
                 if (CLLocationCoordinate2DIsValid(CLLocationCoordinate2DMake(lat, lng))) {
-                    return [[CLLocation alloc] initWithLatitude:lat longitude:lng];
+                  CLLocation *loc = [[CLLocation alloc] initWithCoordinate:(CLLocationCoordinate2DMake(lat, lng)) altitude:alt horizontalAccuracy:0 verticalAccuracy:0 timestamp:[[NSDate alloc]init] ];
+                  return loc;
                 }
             }
         }
